@@ -1,0 +1,314 @@
+//
+//  AppDelegate.swift
+//  VibeWatch
+//
+//  AppDelegate for NSStatusBar menu bar integration.
+//
+
+import Cocoa
+import SwiftUI
+import Combine
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    var statusItem: NSStatusItem!
+    var menu: NSMenu!
+    var iconManager: MenuBarIconManager?
+
+    // Core services
+    var settings: AppSettings!
+    var timeTracker: TimeTracker!
+
+    // Menu items that need to be updated
+    private var todayMenuItem: NSMenuItem?
+    private var limitMenuItem: NSMenuItem?
+    private var remainingMenuItem: NSMenuItem?
+
+    // Keep strong references to windows
+    private var settingsWindow: NSWindow?
+    private var historyWindow: NSWindow?
+
+    // Observers
+    private var cancellables = Set<AnyCancellable>()
+    private var iconUpdateTimer: Timer?
+    private var menuUpdateTimer: Timer?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        print("🦉 VibeWatch: Application launching...")
+
+        // TEST: Adding AppSettings and TimeTracker
+        settings = AppSettings()
+        print("✅ Settings initialized")
+
+        timeTracker = TimeTracker(settings: settings)
+        print("✅ TimeTracker initialized (NOT started)")
+
+        // Create the status bar item
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        print("✅ Status item created")
+
+        // Set up the button with icon
+        if let button = statusItem.button {
+            button.image = NSImage(systemSymbolName: "moon.stars.fill", accessibilityDescription: "Vibe Watch")
+            button.image?.isTemplate = true
+            print("✅ Button configured with moon.stars.fill icon")
+        }
+
+        // Create the menu
+        menu = NSMenu()
+        setupMenu()
+        statusItem.menu = menu
+        print("✅ Menu created and configured")
+
+        // Initialize icon manager for state changes
+        iconManager = MenuBarIconManager(statusItem: statusItem)
+        print("✅ Icon manager initialized")
+
+        // Start tracking
+        timeTracker.startTracking()
+        print("✅ Time tracking started")
+
+        // Set up icon updates every 30 seconds
+        iconUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            self?.updateMenuBarIcon()
+        }
+
+        // Set up menu updates every 10 seconds
+        menuUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+            self?.updateMenuItems()
+        }
+
+        // Set up sleep/wake notifications
+        setupSleepWakeNotifications()
+
+        // Hide the app from the Dock (menu bar only)
+        NSApp.setActivationPolicy(.accessory)
+
+        print("🎉 VibeWatch: Setup complete! Icon should be visible in menu bar.")
+    }
+    
+    private func setupSleepWakeNotifications() {
+        // Subscribe to sleep and wake notifications
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(systemWillSleep),
+            name: NSWorkspace.willSleepNotification,
+            object: nil
+        )
+        
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(systemDidWake),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func systemWillSleep() {
+        // Pause tracking and save data before sleep
+        timeTracker.stopTracking()
+    }
+
+    @objc private func systemDidWake() {
+        // Resume tracking after wake
+        timeTracker.startTracking()
+        updateMenuBarIcon()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // Stop tracking and save data
+        timeTracker.stopTracking()
+    }
+    
+    private func setupMinimalMenu() {
+        // Absolutely minimal test menu
+        let item1 = NSMenuItem(title: "🦉 Vibe Watch Test", action: nil, keyEquivalent: "")
+        item1.isEnabled = false
+        menu.addItem(item1)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let item2 = NSMenuItem(title: "Test Item 1", action: nil, keyEquivalent: "")
+        item2.isEnabled = false
+        menu.addItem(item2)
+
+        let item3 = NSMenuItem(title: "Test Item 2", action: nil, keyEquivalent: "")
+        item3.isEnabled = false
+        menu.addItem(item3)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let quitItem = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+    }
+
+    private func setupMenu() {
+        // Header
+        let headerItem = NSMenuItem()
+        headerItem.title = "🦉 Vibe Watch"
+        headerItem.isEnabled = false
+        menu.addItem(headerItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Today's time (will be updated)
+        todayMenuItem = NSMenuItem()
+        todayMenuItem?.title = "Today: 0h 0m"
+        todayMenuItem?.isEnabled = false
+        menu.addItem(todayMenuItem!)
+
+        // Limit
+        limitMenuItem = NSMenuItem()
+        limitMenuItem?.title = "Limit: 0h 0m"
+        limitMenuItem?.isEnabled = false
+        menu.addItem(limitMenuItem!)
+
+        // Remaining
+        remainingMenuItem = NSMenuItem()
+        remainingMenuItem?.title = "Remaining: 0h 0m"
+        remainingMenuItem?.isEnabled = false
+        menu.addItem(remainingMenuItem!)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // View History
+        let historyItem = NSMenuItem(title: "📊 View History", action: #selector(openHistory), keyEquivalent: "h")
+        historyItem.target = self
+        menu.addItem(historyItem)
+
+        // Settings
+        let settingsItem = NSMenuItem(title: "⚙️  Settings", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Quit
+        let quitItem = NSMenuItem(title: "Quit Vibe Watch", action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        // Initial update
+        updateMenuItems()
+    }
+
+    private func updateMenuItems() {
+        // Update today's time
+        todayMenuItem?.title = "Today: \(timeTracker.todayRecord.formattedTotalTime())"
+
+        // Update limit
+        let limitSeconds = settings.getTodayLimit()
+        limitMenuItem?.title = "Limit: \(formatSeconds(limitSeconds))"
+
+        // Update remaining
+        let remaining = timeTracker.getTimeRemaining()
+        let isOverLimit = timeTracker.isOverLimit()
+        if isOverLimit {
+            remainingMenuItem?.title = "⚠️ Over limit by \(formatSeconds(-remaining))"
+        } else {
+            remainingMenuItem?.title = "Remaining: \(formatSeconds(remaining))"
+        }
+    }
+
+    @objc private func openHistory() {
+        // If window already exists, just bring it to front
+        if let window = historyWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        // Temporarily become regular app to show window
+        NSApp.setActivationPolicy(.regular)
+
+        let historyView = HistoryWindowView(timeTracker: timeTracker)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
+            styleMask: [.titled, .closable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Vibe Watch - History"
+        window.contentView = NSHostingView(rootView: historyView)
+        window.center()
+
+        // Store reference before showing
+        historyWindow = window
+
+        window.makeKeyAndOrderFront(nil)
+
+        // Activate app in next runloop to avoid blocking
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+
+        // Go back to accessory when window closes
+        window.delegate = self
+    }
+
+    @objc private func openSettings() {
+        // If window already exists, just bring it to front
+        if let window = settingsWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        // Temporarily become regular app to show window
+        NSApp.setActivationPolicy(.regular)
+
+        let settingsView = SettingsWindowView(settings: settings)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Vibe Watch - Settings"
+        window.contentView = NSHostingView(rootView: settingsView)
+        window.center()
+
+        // Store reference before showing
+        settingsWindow = window
+
+        window.makeKeyAndOrderFront(nil)
+
+        // Activate app in next runloop to avoid blocking
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+
+        // Go back to accessory when window closes
+        window.delegate = self
+    }
+
+    private func updateMenuBarIcon() {
+        let state = timeTracker.getIconState()
+        iconManager?.updateIcon(to: state, animated: true)
+    }
+
+    @objc private func quitApp() {
+        NSApplication.shared.terminate(nil)
+    }
+
+    private func formatSeconds(_ seconds: Int) -> String {
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+    }
+}
+
+// MARK: - NSWindowDelegate
+extension AppDelegate: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        // When any window closes, check if all windows are closed
+        // If so, go back to accessory mode
+        DispatchQueue.main.async {
+            let hasVisibleWindows = (self.settingsWindow?.isVisible == true) ||
+                                   (self.historyWindow?.isVisible == true)
+
+            if !hasVisibleWindows {
+                NSApp.setActivationPolicy(.accessory)
+            }
+        }
+    }
+}
+

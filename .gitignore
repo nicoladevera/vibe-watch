@@ -1,0 +1,37 @@
+# Xcode
+.DS_Store
+*.swp
+*~.nib
+DerivedData/
+*.hmap
+*.ipa
+*.xcuserstate
+*.xcworkspace
+!default.xcworkspace
+xcuserdata/
+
+# Swift Package Manager
+/.build
+/Packages
+Package.resolved
+*.xcodeproj
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build
+
+# SPM build artifacts
+.swiftpm/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# App data
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
