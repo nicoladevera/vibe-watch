@@ -42,24 +42,27 @@ A playful macOS menu bar application that tracks your "vibe coding" time and hel
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vibe-watch.git
+git clone https://github.com/nicoladevera/vibe-watch.git
 cd vibe-watch
 
-# Build with Swift Package Manager
+# Build with Swift Package Manager (Debug)
 swift build
 
-# Run the app
+# Run the debug build
 ./.build/debug/VibeWatch
+
+# Or build for release (recommended)
+swift build --configuration release
+
+# Run the release build
+./.build/release/VibeWatch
 ```
 
 ### Building with Xcode
 
 ```bash
-# Generate Xcode project
-swift package generate-xcodeproj
-
-# Open in Xcode
-open VibeWatch.xcodeproj
+# Open Package.swift directly in Xcode
+open Package.swift
 ```
 
 Then press Cmd+R to build and run.
