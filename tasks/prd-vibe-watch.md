@@ -258,18 +258,30 @@ ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print $NF/1000000000; exit}'
 
 ## 9. Open Questions
 
-1. **Cursor process name:** What is the exact process name for Cursor as shown in Activity Monitor? Need to verify for accurate detection.
+### ✅ All Questions Resolved
 
-2. **Multiple displays:** If coding apps are on a secondary display while the user browses on the primary, should this count as vibe coding time? (Current spec: Yes, as long as user is active and app is running)
+1. **Cursor process name**: ✅ **RESOLVED** - Process name is "Cursor" (capital C, lowercase "ursor")
 
-3. **Owl icon sourcing:** Should we commission a custom 3-icon owl set for perfect consistency, or source from free icon libraries like Flaticon/Noun Project? Budget consideration for V1.
+2. **Multiple displays**: ✅ **RESOLVED** - YES, track time if coding apps are on secondary display while browsing on primary, as long as user is active and app is running
 
-4. **Data location:** Should historical data be stored in `~/Library/Application Support/VibeWatch/` or use iCloud for backup potential (without sync)?
+3. **Owl icon sourcing**: ✅ **RESOLVED** - Source from free icon libraries (Flaticon, Noun Project, etc.) - no custom commission for V1
 
-5. **Configurable apps:** Should users be able to add/remove apps from the tracking list in a future version?
+4. **Data location**: ✅ **RESOLVED** - Store in `~/Library/Application Support/VibeWatch/` WITHOUT iCloud backup
+   - Standard macOS app location
+   - Better performance (no sync overhead)
+   - User privacy (data stays local)
+   - Manual export to CSV/JSON available for backup
+   - iCloud backup can be V2 feature if users request it
+
+5. **Configurable apps**: ✅ **RESOLVED** - V1: Hardcoded tracking for Cursor, Antigravity, Terminal only
+   - V2 Feature: Allow users to add/remove custom apps via Settings UI
+   - This keeps V1 simple and focused
 
 ---
 
+**PRD Status**: ✅ **COMPLETE** - All requirements defined, all questions resolved
+
 *Document created: January 3, 2026*  
-*Status: Draft — Pending Review*
+*Last updated: January 3, 2026*  
+*Status: Approved — Ready for Implementation*
 
