@@ -8,7 +8,8 @@
   - GRDB.swift 6.29.3: SQLite persistence layer (see `Package.resolved`)
 - Environment requirements:
   - macOS 13.0+ with Xcode 15.0+ for building/running
-  - No Node/Python tooling used in this repo
+- Development tooling:
+  - Python 3.9+ with Pillow (for icon processing script in `scripts/`)
 
 ## Project Structure
 - Architecture: single-package SwiftPM app with layered directories (Models/Views/Services)
@@ -17,10 +18,12 @@
     - `Sources/VibeWatch/Models/`: data types like `DailyRecord`, `TimeEntry`, `AppSettings`
     - `Sources/VibeWatch/Services/`: business logic (tracking, persistence, app detection)
     - `Sources/VibeWatch/Views/`: SwiftUI UI surfaces (menu bar dropdown, history, settings)
+    - `Sources/VibeWatch/Resources/`: icon assets (eye icons for menu bar states)
     - `Sources/VibeWatch/AppDelegate.swift`: app lifecycle integration
     - `Sources/VibeWatch/VibeWatchApp.swift`: SwiftUI entry point
     - `Sources/VibeWatch/Info.plist`: app bundle metadata
   - `Tests/VibeWatchTests/`: XCTest unit tests
+  - `scripts/`: development utilities (icon processing, etc.)
   - `docs/`: project documentation
     - `docs/guides/`: onboarding/how-to (`docs/guides/quick-start.md`)
     - `docs/product/`: product/requirements docs

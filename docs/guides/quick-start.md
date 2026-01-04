@@ -2,7 +2,7 @@
 
 ## What You Have Now
 
-A fully functional macOS menu bar app that tracks your "vibe coding" time! 🦉
+A fully functional macOS menu bar app that tracks your "vibe coding" time! 👀
 
 ## Running the App
 
@@ -26,7 +26,7 @@ swift run
 
 ## First Time Setup
 
-1. **Launch the app** - Look for the moon/stars icon in your menu bar (top-right)
+1. **Launch the app** - Look for the eye icon in your menu bar (top-right)
 2. **Click the icon** - You'll see a dropdown with today's stats
 3. **Click "Settings"** - Configure your daily limits:
    - Default: 4 hours on weekdays, 2 hours on weekends
@@ -35,9 +35,9 @@ swift run
 
 ## Menu Bar Icon States
 
-- **🌙 Moon/Stars** (Alert): You're good! More than 1 hour remaining
-- **⚠️ Triangle** (Concerned): Warning! Less than 1 hour remaining  
-- **💤 Sleep** (Exhausted): You've exceeded your limit (but can keep coding)
+- **👀 Alert Eyes**: You're good! More than 1 hour remaining
+- **😬 Concerned Eyes**: Warning! Less than 1 hour remaining
+- **😴 Exhausted Eyes**: You've exceeded your limit (but can keep coding)
 
 ## Features to Try
 
@@ -67,18 +67,17 @@ No internet connection required. No telemetry. Your data stays on your machine.
 
 ## Known Limitations (V1)
 
-- **Icons**: Currently using SF Symbols placeholders instead of custom owl illustrations
 - **Launch at Login**: UI toggle exists but functionality not yet implemented
 - **Calendar Heat Map**: History view shows list only (heat map coming soon)
 - **Hourly Activity Chart**: Data is tracked but visualization not yet implemented
 
 ## Customization Ideas for Later
 
-1. **Custom Owl Icons**: Replace SF Symbols with actual owl illustrations
-2. **Add More Apps**: Track VS Code, Xcode, IntelliJ, etc.
-3. **Notifications**: Optional reminders when approaching limit
-4. **Break Timers**: Suggest breaks after continuous coding
-5. **Themes**: Customize colors and icon styles
+1. **Add More Apps**: Track VS Code, Xcode, IntelliJ, etc.
+2. **Notifications**: Optional reminders when approaching limit
+3. **Break Timers**: Suggest breaks after continuous coding
+4. **Themes**: Customize colors and icon styles
+5. **Icon Variations**: More expressive eye states or animations
 
 ## Troubleshooting
 
@@ -103,4 +102,4 @@ Want to customize further? Check out:
 - `docs/product/tasks.md` - Implementation checklist
 - `README.md` - Architecture overview
 
-Happy vibe coding! 🦉✨
+Happy vibe coding! 👀✨

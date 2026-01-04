@@ -50,9 +50,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Set up the button with icon
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "moon.stars.fill", accessibilityDescription: "Vibe Watch")
-            button.image?.isTemplate = true
-            print("✅ Button configured with moon.stars.fill icon")
+            // Load icon from bundle
+            var icon: NSImage?
+            if let imageURL = Bundle.module.url(forResource: "alert", withExtension: "png") {
+                icon = NSImage(contentsOf: imageURL)
+                icon?.isTemplate = true
+                icon?.size = NSSize(width: 18, height: 18)
+                button.image = icon
+                print("✅ Button configured with alert icon from bundle")
+            } else {
+                // Fallback to SF Symbol
+                icon = NSImage(systemSymbolName: "eye.fill", accessibilityDescription: "Vibe Watch")
+                icon?.isTemplate = true
+                button.image = icon
+                print("⚠️ Could not load alert icon, using fallback")
+            }
         }
 
         // Create the menu

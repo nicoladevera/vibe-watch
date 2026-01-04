@@ -15,13 +15,13 @@
 - `VibeWatch/Services/IdleMonitorTests.swift` - Unit tests for IdleMonitor
 - `VibeWatch/Services/DataStore.swift` - SQLite/Core Data persistence layer
 - `VibeWatch/Services/DataStoreTests.swift` - Unit tests for DataStore
-- `VibeWatch/Views/MenuBarIcon.swift` - Menu bar icon view with owl states
+- `VibeWatch/Views/MenuBarIcon.swift` - Menu bar icon view with eye icon states
 - `VibeWatch/Views/DropdownPanel.swift` - Main dropdown panel UI
 - `VibeWatch/Views/WeeklySummaryChart.swift` - Mini bar chart for weekly summary
 - `VibeWatch/Views/SettingsView.swift` - Settings window for configuring limits
 - `VibeWatch/Views/HistoryView.swift` - Full history view with calendar and charts
 - `VibeWatch/Views/HourlyActivityChart.swift` - 24-hour activity visualization
-- `VibeWatch/Resources/Assets.xcassets` - Owl icons (alert, concerned, sleepy) for light/dark modes
+- `VibeWatch/Resources/` - Eye icons (alert.png, concerned.png, exhausted.png) with transparent backgrounds
 - `VibeWatch/Utilities/TimeFormatter.swift` - Helper for formatting time as "Xh Ym"
 - `VibeWatch/Utilities/ExportManager.swift` - CSV/JSON export functionality
 
@@ -31,7 +31,7 @@
 - Use `swift test` or Xcode's test runner (Cmd+U) to execute tests.
 - This is a native macOS menu bar application built with Swift and SwiftUI.
 - Menu bar apps require `LSUIElement` set to `YES` in Info.plist to hide from Dock.
-- Owl icons need @1x, @2x, and @3x versions for Retina support.
+- Eye icons use PNG format with transparent backgrounds and are made square to prevent stretching in the menu bar.
 
 ## Instructions for Completing Tasks
 
@@ -53,7 +53,7 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 1.2 Configure the app as a menu bar app (set `LSUIElement` to `YES` in Info.plist to hide Dock icon)
   - [x] 1.3 Set up `NSStatusBar` integration in AppDelegate to display menu bar icon
   - [x] 1.4 Create basic project folder structure (`Models/`, `Views/`, `Services/`, `Utilities/`, `Resources/`)
-  - [x] 1.5 Add placeholder owl icon to menu bar to verify setup works
+  - [x] 1.5 Add placeholder icon to menu bar to verify setup works
   - [x] 1.6 Configure app to build and run, confirming icon appears in menu bar
 
 - [x] 2.0 Implement core time tracking engine
@@ -67,12 +67,12 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 2.8 Write unit tests for `IdleMonitor` (mock shell command output)
   - [x] 2.9 Write unit tests for `TimeTracker` (test time accumulation logic)
 
-- [x] 3.0 Build menu bar icon with owl states
-  - [x] 3.1 Source or create three owl icons: Alert (wide eyes), Concerned (worried), Sleepy (droopy eyes)
-  - [x] 3.2 Export icons in required sizes: 16x16, 32x32 (@2x), 48x48 (@3x) for both light and dark menu bar
-  - [x] 3.3 Add icons to `Assets.xcassets` with proper naming (e.g., `owl-alert`, `owl-concerned`, `owl-sleepy`)
+- [x] 3.0 Build menu bar icon with expressive states
+  - [x] 3.1 Source or create three eye icons: Alert (wide eyes), Concerned (worried eyes), Exhausted (tired/sleepy eyes)
+  - [x] 3.2 Process icons: remove backgrounds, make square to prevent stretching, export as PNG with transparency
+  - [x] 3.3 Add icons to `Resources/` folder with proper naming (`alert.png`, `concerned.png`, `exhausted.png`)
   - [x] 3.4 Create `MenuBarIcon` component that selects icon based on time remaining vs. limit
-  - [x] 3.5 Implement icon state logic: Alert (>1h remaining), Concerned (≤1h remaining), Sleepy (over limit)
+  - [x] 3.5 Implement icon state logic: Alert (>1h remaining), Concerned (≤1h remaining), Exhausted (over limit)
   - [x] 3.6 Add 0.3-second fade transition between icon states using `NSStatusBarButton` animation
   - [x] 3.7 Optionally display time text next to icon (e.g., "3h") based on user preference
 

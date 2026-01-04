@@ -43,34 +43,61 @@ class MenuBarIconManager {
     
     /// Set the actual icon image
     private func setIconImage(for state: IconState) {
-        let image: NSImage?
-        
+        let imageName: String
+
         switch state {
         case .alert:
-            // Happy owl - use moon.stars for now (will replace with custom owl)
-            image = NSImage(systemSymbolName: "moon.stars.fill", accessibilityDescription: "Alert")
+            // Alert eyes - wide awake and energetic
+            imageName = "alert"
         case .concerned:
-            // Concerned owl - use exclamationmark for now
-            image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Warning")
+            // Concerned eyes - worried
+            imageName = "concerned"
         case .exhausted:
-            // Exhausted owl - use zzz for now
-            image = NSImage(systemSymbolName: "powersleep", accessibilityDescription: "Exhausted")
+            // Exhausted eyes - sleepy/tired
+            imageName = "exhausted"
         }
-        
+
+        // Load image from module bundle
+        let image = loadImageFromBundle(named: imageName)
+
         // Configure the image
-        image?.isTemplate = true // This makes it adapt to light/dark menu bar
+        if let img = image {
+            img.isTemplate = true // This makes it adapt to light/dark menu bar
+            img.size = NSSize(width: 18, height: 18) // Menu bar icon size
+        }
         statusItem.button?.image = image
+    }
+
+    /// Load image from the module's resource bundle
+    private func loadImageFromBundle(named name: String) -> NSImage? {
+        // Try loading from Bundle.module (SPM resources)
+        if let imageURL = Bundle.module.url(forResource: name, withExtension: "png"),
+           let image = NSImage(contentsOf: imageURL) {
+            print("✅ Loaded \(name).png from bundle")
+            return image
+        }
+
+        print("⚠️ Could not load \(name).png from bundle, trying NSImage(named:)")
+        // Fallback to named image
+        return NSImage(named: name)
     }
     
     /// Update icon with optional time text
     func updateWithTime(_ timeString: String?, state: IconState, animated: Bool = true) {
         updateIcon(to: state, animated: animated)
 
-        let title = timeString ?? ""
-        statusItem.length = title.isEmpty ? NSStatusItem.squareLength : NSStatusItem.variableLength
         if let button = statusItem.button {
-            button.title = title
-            button.imagePosition = title.isEmpty ? .imageOnly : .imageLeading
+            if let timeString = timeString, !timeString.isEmpty {
+                // Show both icon and time
+                button.title = " \(timeString)" // Space for padding between icon and text
+                button.imagePosition = .imageLeading
+                statusItem.length = NSStatusItem.variableLength
+            } else {
+                // Show only icon
+                button.title = ""
+                button.imagePosition = .imageOnly
+                statusItem.length = NSStatusItem.squareLength
+            }
         }
     }
 }

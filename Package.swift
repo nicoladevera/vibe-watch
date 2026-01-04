@@ -27,6 +27,9 @@ let package = Package(
             path: "Sources/VibeWatch",
             exclude: [
                 "Info.plist"
+            ],
+            resources: [
+                .process("Resources")
             ]
         ),
         .testTarget(

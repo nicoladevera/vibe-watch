@@ -128,7 +128,9 @@ The following are explicitly **not** part of this initial release:
 
 The icon should be **playful and expressive** while fitting the macOS menu bar aesthetic. Instead of using standard emoji, consider these creative directions:
 
-**✨ V1 Decision: Going with the Owl concept** - The owl aligns perfectly with the "Vibe Watch" name and developer culture (late-night coding), has expressive features that work well at small sizes, and provides an intuitive visual progression through the three states.
+**🔄 Design Update (V1.1):** The design evolved from owl icons to **expressive eye icons** for better menu bar visibility and clarity. Eyes are simpler, scale better at small sizes, and clearly convey the three emotional states (alert, concerned, exhausted) without excessive detail.
+
+**✨ Original V1 Decision: Going with the Owl concept** - The owl initially aligned perfectly with the "Vibe Watch" name and developer culture (late-night coding), has expressive features that work well at small sizes, and provides an intuitive visual progression through the three states. However, testing showed that owl details were too complex for menu bar display, leading to the simplified eye icon approach.
 
 #### Recommended Icon Concepts:
 
@@ -163,7 +165,22 @@ The icon should be **playful and expressive** while fitting the macOS menu bar a
 - Consider SF Symbols as base with custom overlay for expressions
 - Recommend **0.3-second fade transition** between states (smooth but not distracting)
 
-#### Design Resources & V1 Implementation:
+#### Design Resources & V1.1 Implementation (Current):
+
+**Eye Icon Implementation:**
+- **Current Design**: Simple, expressive eye icons showing three emotional states
+- **Icon Files**:
+  - `alert.png` - Wide open, alert eyes (>1h remaining)
+  - `concerned.png` - Worried/concerned eyes (<1h remaining)
+  - `exhausted.png` - Tired/sleepy eyes (over limit)
+- **Technical Specs**:
+  - Format: PNG with transparent background
+  - Size: Square format (preserves aspect ratio at menu bar size)
+  - Color: Monochrome/template images (auto-adapt to light/dark menu bars)
+  - Menu bar size: 18×18 pixels
+- **Benefits**: Clearer visibility at small sizes, simpler design, better menu bar integration
+
+#### Original V1 Owl Design (Historical):
 
 **Owl Icon Sources (for V1):**
 - **Flaticon Owl Collections**: 
@@ -264,7 +281,7 @@ ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print $NF/1000000000; exit}'
 
 2. **Multiple displays**: ✅ **RESOLVED** - YES, track time if coding apps are on secondary display while browsing on primary, as long as user is active and app is running
 
-3. **Owl icon sourcing**: ✅ **RESOLVED** - Source from free icon libraries (Flaticon, Noun Project, etc.) - no custom commission for V1
+3. **Icon design**: ✅ **RESOLVED** - V1.1 uses custom eye icons (simplified from original owl concept for better menu bar visibility)
 
 4. **Data location**: ✅ **RESOLVED** - Store in `~/Library/Application Support/VibeWatch/` WITHOUT iCloud backup
    - Standard macOS app location
