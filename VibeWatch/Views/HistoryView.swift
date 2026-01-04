@@ -9,7 +9,7 @@ import SwiftUI
 
 struct HistoryWindowView: View {
     @ObservedObject var timeTracker: TimeTracker
-    @Environment(\.dismiss) var dismiss
+    var onClose: () -> Void
     @State private var recentRecords: [DailyRecord] = []
     @State private var showExportSheet = false
     @State private var showClearAlert = false
@@ -25,7 +25,7 @@ struct HistoryWindowView: View {
                 Spacer()
                 
                 Button("Close") {
-                    dismiss()
+                    onClose()
                 }
             }
             .padding()
@@ -76,7 +76,7 @@ struct HistoryWindowView: View {
             Text("This will permanently delete all historical data. This action cannot be undone.")
         }
         .sheet(isPresented: $showExportSheet) {
-            ExportDataView(timeTracker: timeTracker)
+            ExportDataView(timeTracker: timeTracker, onClose: onClose)
         }
     }
     
@@ -169,7 +169,7 @@ struct DayRecordRow: View {
 
 struct ExportDataView: View {
     @ObservedObject var timeTracker: TimeTracker
-    @Environment(\.dismiss) var dismiss
+    var onClose: () -> Void
     @State private var exportFormat: ExportFormat = .csv
     @State private var showSavePanel = false
     
@@ -188,7 +188,7 @@ struct ExportDataView: View {
             
             HStack {
                 Button("Cancel") {
-                    dismiss()
+                    onClose()
                 }
                 .keyboardShortcut(.cancelAction)
                 
@@ -220,7 +220,7 @@ struct ExportDataView: View {
                         try csvString.write(to: url, atomically: true, encoding: .utf8)
                     }
                     
-                    dismiss()
+                    onClose()
                 } catch {
                     print("Export error: \(error)")
                 }
@@ -228,4 +228,3 @@ struct ExportDataView: View {
         }
     }
 }
-

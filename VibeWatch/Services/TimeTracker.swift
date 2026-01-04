@@ -17,6 +17,7 @@ class TimeTracker: ObservableObject {
     private let settings: AppSettings
     private var dataStore: DataStore?  // Made optional - lazy init
     private var timer: Timer?
+    private let trackingQueue = DispatchQueue(label: "vibewatch.tracking", qos: .utility)
     private var lastCheckDate: Date?
     
     // Polling interval: 30 seconds
@@ -57,7 +58,9 @@ class TimeTracker: ObservableObject {
 
         // Start timer
         timer = Timer.scheduledTimer(withTimeInterval: pollingInterval, repeats: true) { [weak self] _ in
-            self?.checkAndTrackTime()
+            self?.trackingQueue.async { [weak self] in
+                self?.checkAndTrackTime()
+            }
         }
 
         // Don't run immediately - it blocks the main thread during app launch
@@ -77,14 +80,21 @@ class TimeTracker: ObservableObject {
     
     /// Check if we should track time and update accordingly
     private func checkAndTrackTime() {
+        let now = Date()
+        let calendar = Calendar.current
+        let shouldRollDay = lastCheckDate.map { !calendar.isDate($0, inSameDayAs: now) } ?? false
+
         // Check if date has changed (midnight passed)
-        if let lastDate = lastCheckDate, !Calendar.current.isDate(lastDate, inSameDayAs: Date()) {
-            // New day! Save old record and create new one
-            savePendingTime()
-            todayRecord = DailyRecord(date: Date())
-            loadTodayRecord()
+        if shouldRollDay {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                // New day! Save old record and create new one
+                self.savePendingTime()
+                self.todayRecord = DailyRecord(date: now)
+                self.loadTodayRecord()
+            }
         }
-        lastCheckDate = Date()
+        lastCheckDate = now
         
         // Check if any tracked app is running
         guard appDetector.isAnyTrackedAppRunning() else {
@@ -98,18 +108,20 @@ class TimeTracker: ObservableObject {
         
         // Track time! Add the polling interval to each running app
         let runningApps = appDetector.getRunningAppNames()
-        let calendar = Calendar.current
-        let currentHour = calendar.component(.hour, from: Date())
-        
-        for appName in runningApps {
-            pendingTime[appName, default: 0] += Int(pollingInterval)
-            todayRecord.addTime(appName: appName, seconds: Int(pollingInterval), hour: currentHour)
-        }
-        
-        // Check if we should persist (every 5 minutes worth of checks)
-        let totalPendingSeconds = pendingTime.values.reduce(0, +)
-        if totalPendingSeconds >= 300 { // 5 minutes
-            savePendingTime()
+        let currentHour = calendar.component(.hour, from: now)
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            for appName in runningApps {
+                self.pendingTime[appName, default: 0] += Int(self.pollingInterval)
+                self.todayRecord.addTime(appName: appName, seconds: Int(self.pollingInterval), hour: currentHour)
+            }
+
+            // Check if we should persist (every 5 minutes worth of checks)
+            let totalPendingSeconds = self.pendingTime.values.reduce(0, +)
+            if totalPendingSeconds >= 300 { // 5 minutes
+                self.savePendingTime()
+            }
         }
     }
     
@@ -213,4 +225,3 @@ enum IconState {
     case concerned  // Worried, <1h remaining
     case exhausted  // Sleepy, over limit
 }
-

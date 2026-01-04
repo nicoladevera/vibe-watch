@@ -59,23 +59,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.menu = menu
         print("✅ Menu created and configured")
 
-        // Initialize icon manager for state changes
+        // TEST: Re-enable icon manager only
         iconManager = MenuBarIconManager(statusItem: statusItem)
         print("✅ Icon manager initialized")
 
+        // STILL DISABLED:
         // Start tracking
-        timeTracker.startTracking()
-        print("✅ Time tracking started")
+        // timeTracker.startTracking()
+        // print("✅ Time tracking started")
 
         // Set up icon updates every 30 seconds
-        iconUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
-            self?.updateMenuBarIcon()
-        }
+        // iconUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+        //     self?.updateMenuBarIcon()
+        // }
 
         // Set up menu updates every 10 seconds
-        menuUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
-            self?.updateMenuItems()
-        }
+        // menuUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+        //     self?.updateMenuItems()
+        // }
 
         // Set up sleep/wake notifications
         setupSleepWakeNotifications()
@@ -220,7 +221,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Temporarily become regular app to show window
         NSApp.setActivationPolicy(.regular)
 
-        let historyView = HistoryWindowView(timeTracker: timeTracker)
+        let historyView = HistoryWindowView(timeTracker: timeTracker) { [weak self] in
+            DispatchQueue.main.async { [weak self] in
+                self?.historyWindow?.performClose(nil)
+            }
+        }
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
             styleMask: [.titled, .closable, .resizable],
@@ -228,8 +233,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         window.title = "Vibe Watch - History"
-        window.contentView = NSHostingView(rootView: historyView)
+        window.contentViewController = NSHostingController(rootView: historyView)
         window.center()
+        window.isReleasedWhenClosed = false
 
         // Store reference before showing
         historyWindow = window
@@ -255,7 +261,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Temporarily become regular app to show window
         NSApp.setActivationPolicy(.regular)
 
-        let settingsView = SettingsWindowView(settings: settings)
+        let settingsView = SettingsWindowView(settings: settings) { [weak self] in
+            DispatchQueue.main.async { [weak self] in
+                self?.settingsWindow?.performClose(nil)
+            }
+        }
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
             styleMask: [.titled, .closable],
@@ -263,8 +273,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         window.title = "Vibe Watch - Settings"
-        window.contentView = NSHostingView(rootView: settingsView)
+        window.contentViewController = NSHostingController(rootView: settingsView)
         window.center()
+        window.isReleasedWhenClosed = false
 
         // Store reference before showing
         settingsWindow = window
@@ -299,16 +310,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - NSWindowDelegate
 extension AppDelegate: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
-        // When any window closes, check if all windows are closed
-        // If so, go back to accessory mode
-        DispatchQueue.main.async {
-            let hasVisibleWindows = (self.settingsWindow?.isVisible == true) ||
-                                   (self.historyWindow?.isVisible == true)
-
-            if !hasVisibleWindows {
-                NSApp.setActivationPolicy(.accessory)
+        if let closedWindow = notification.object as? NSWindow {
+            if closedWindow == settingsWindow {
+                settingsWindow = nil
+            } else if closedWindow == historyWindow {
+                historyWindow = nil
             }
+        }
+
+        let hasOpenWindows = (settingsWindow != nil) || (historyWindow != nil)
+        if !hasOpenWindows {
+            NSApp.setActivationPolicy(.accessory)
         }
     }
 }
-
