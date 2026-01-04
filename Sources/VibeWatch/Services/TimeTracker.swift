@@ -20,27 +20,46 @@ class TimeTracker: ObservableObject {
     private var timer: DispatchSourceTimer?
     private let trackingQueue = DispatchQueue(label: "vibewatch.tracking", qos: .utility)
     private var lastCheckDate: Date?
-    
-    // Polling interval: 15 seconds
-    private let pollingInterval: TimeInterval = 15.0
-    
+
+    // Configurable timing parameters (defaults for production, can override for testing)
+    let pollingInterval: TimeInterval
+    let saveThreshold: Int  // Seconds of pending time before auto-save
+    let dbInitDelay: TimeInterval
+
     // Track time per app since last save
     private var pendingTime: [String: Int] = [:]
-    
-    init(settings: AppSettings) {
+
+    /// Initialize TimeTracker with optional test configuration
+    init(
+        settings: AppSettings,
+        dataStore: DataStore? = nil,
+        pollingInterval: TimeInterval = 15.0,
+        saveThreshold: Int = 300,  // 5 minutes
+        dbInitDelay: TimeInterval = 2.0
+    ) {
         self.settings = settings
+        self.pollingInterval = pollingInterval
+        self.saveThreshold = saveThreshold
+        self.dbInitDelay = dbInitDelay
         self.appDetector = AppDetector(trackedApps: settings.trackedApps)
         self.idleMonitor = IdleMonitor(idleThresholdSeconds: TimeInterval(settings.idleThresholdSeconds))
-        
+
         // Initialize today's record with empty data (database loads later)
         self.todayRecord = DailyRecord(date: Date())
-        
-        // Initialize database in background AFTER app is ready
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            self?.initializeDatabase()
+
+        // If DataStore provided (testing), use it immediately
+        if let providedDataStore = dataStore {
+            self.dataStore = providedDataStore
+            self.isDatabaseReady = true
+            self.loadTodayRecord()
+            print("✅ TimeTracker initialized with provided DataStore")
+        } else {
+            // Initialize database in background AFTER app is ready (production)
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + dbInitDelay) { [weak self] in
+                self?.initializeDatabase()
+            }
+            print("✅ TimeTracker initialized")
         }
-        
-        print("✅ TimeTracker initialized")
     }
     
     private func initializeDatabase() {
@@ -127,9 +146,9 @@ class TimeTracker: ObservableObject {
                 self.todayRecord.addAppTime(appName: appName, seconds: elapsedSeconds)
             }
 
-            // Check if we should persist (every 5 minutes worth of checks)
+            // Check if we should persist (based on save threshold)
             let totalPendingSeconds = self.pendingTime.values.reduce(0, +)
-            if totalPendingSeconds >= 300 { // 5 minutes
+            if totalPendingSeconds >= self.saveThreshold {
                 self.savePendingTime()
             }
         }

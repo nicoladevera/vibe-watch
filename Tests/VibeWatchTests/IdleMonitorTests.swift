@@ -33,13 +33,10 @@ final class IdleMonitorTests: XCTestCase {
     }
     
     func testIdleThreshold() throws {
-        // Test with very low threshold (user should be "inactive")
-        let strictMonitor = IdleMonitor(idleThresholdSeconds: 0.001)
-        
-        // And with very high threshold (user should be "active")
+        // Test with very high threshold (user should be "active")
         let lenientMonitor = IdleMonitor(idleThresholdSeconds: 999999)
         let isActive = lenientMonitor.isUserActive()
-        
+
         XCTAssertTrue(isActive, "With very high threshold, user should be considered active")
     }
 }
