@@ -1,13 +1,15 @@
-# Vibe Watch 🦉
+# Vibe Watch 👀
 
 A playful macOS menu bar application that tracks your "vibe coding" time and helps you maintain a healthy work-life balance.
 
 ## Features
 
-- **🦉 Playful Owl Icons**: Menu bar icon changes expression based on your coding time
-  - Alert owl (😊): More than 1 hour remaining
-  - Concerned owl (😬): Within 1 hour of limit
-  - Exhausted owl (😵): Over your daily limit
+- **👀 Expressive Eye Icons**: Menu bar icon changes expression based on your coding time
+  - Alert eyes: More than 1 hour remaining
+  - Concerned eyes: Within 1 hour of limit
+  - Exhausted eyes: Over your daily limit
+
+![Eye Icon States](Sources/VibeWatch/Resources/eye-icons.png)
 
 - **⏱️ Smart Time Tracking**: Automatically tracks time spent in Cursor, Antigravity, and Terminal
   - Only counts time when you're actively coding (detects system idle time)
@@ -69,7 +71,7 @@ Then press Cmd+R to build and run.
 
 ## Usage
 
-1. **Launch the app**: The owl icon will appear in your menu bar
+1. **Launch the app**: The eye icon will appear in your menu bar
 2. **Click the icon**: View today's stats, weekly summary, and access settings
 3. **Set your limits**: Click Settings to configure daily coding limits
 4. **View history**: Click "View History" to see your coding patterns
@@ -110,7 +112,7 @@ Want to track other apps? Open an issue or submit a PR!
 
 ## Roadmap
 
-- [ ] Custom owl icon illustrations (currently using SF Symbols placeholders)
+- [x] Custom eye icon illustrations
 - [ ] Calendar heat map visualization
 - [ ] Launch at login functionality
 - [ ] Configurable app list
@@ -130,7 +132,7 @@ MIT License - see LICENSE file for details
 
 - Built with Swift and SwiftUI
 - Uses [GRDB.swift](https://github.com/groue/GRDB.swift) for SQLite persistence
-- Owl concept inspired by late-night coding sessions 🦉
+- Eye icon concept inspired by watching over your coding sessions 👀
 
 ---
 
