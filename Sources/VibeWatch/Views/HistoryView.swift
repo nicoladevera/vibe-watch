@@ -14,6 +14,7 @@ struct HistoryWindowView: View {
     @State private var weeklyRecords: [DailyRecord] = []
     @State private var showExportSheet = false
     @State private var showClearAlert = false
+    @State private var weeklyHoverDetail: (date: Date, hours: Double)? = nil
     
     var body: some View {
         VStack {
@@ -25,9 +26,10 @@ struct HistoryWindowView: View {
                 
                 Spacer()
                 
-                Button("Close") {
+                Button("Done") {
                     onClose()
                 }
+                .keyboardShortcut(.defaultAction)
             }
             .padding()
             
@@ -38,11 +40,6 @@ struct HistoryWindowView: View {
                 VStack(spacing: 20) {
                     weeklySummaryView
 
-                    Divider()
-
-                    // Calendar heat map (placeholder)
-                    calendarView
-                    
                     Divider()
                     
                     // Recent days list
@@ -68,7 +65,7 @@ struct HistoryWindowView: View {
             }
             .padding()
         }
-        .frame(width: 600, height: 500)
+        .frame(width: 440, height: 520)
         .onAppear {
             loadRecentRecords()
         }
@@ -125,26 +122,45 @@ struct HistoryWindowView: View {
             print("Error clearing data: \(error)")
         }
     }
-    
-    private var calendarView: some View {
-        VStack(alignment: .leading) {
-            Text("Last 30 Days")
-                .font(.headline)
-            
-            Text("Calendar heat map coming soon...")
-                .foregroundColor(.secondary)
-                .padding()
-        }
-    }
 
     private var weeklySummaryView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("This Week")
                 .font(.headline)
 
-            WeeklySummaryChart(records: weeklyRecords)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            WeeklySummaryChart(records: weeklyRecords) { detail in
+                weeklyHoverDetail = detail
+            }
+                .frame(maxWidth: .infinity)
+
+            Text(weeklyDetailText())
+                .font(.subheadline)
+                .foregroundColor(.secondary)
         }
+    }
+
+    private func weeklyDetailText() -> String {
+        guard let detail = weeklyHoverDetail else {
+            return "Bars show total coding time per day. Hover a day for details."
+        }
+
+        return "\(formatDate(detail.date)) • \(formatHours(detail.hours))"
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
+    }
+
+    private func formatHours(_ hours: Double) -> String {
+        if hours <= 0 {
+            return "No activity"
+        }
+
+        let wholeHours = Int(hours)
+        let minutes = Int((hours - Double(wholeHours)) * 60)
+        return wholeHours > 0 ? "\(wholeHours)h \(minutes)m" : "\(minutes)m"
     }
     
     private var recentDaysView: some View {

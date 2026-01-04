@@ -173,7 +173,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func setupMinimalMenu() {
         // Absolutely minimal test menu
-        let item1 = NSMenuItem(title: "🦉 Vibe Watch Test", action: nil, keyEquivalent: "")
+        let item1 = NSMenuItem(title: "Vibe Watch Test", action: nil, keyEquivalent: "")
         item1.isEnabled = false
         menu.addItem(item1)
 
@@ -197,7 +197,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupMenu() {
         // Header
         let headerItem = NSMenuItem()
-        headerItem.title = "🦉 Vibe Watch"
+        headerItem.title = "Vibe Watch"
         headerItem.isEnabled = false
         menu.addItem(headerItem)
 
@@ -224,12 +224,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem.separator())
 
         // View History
-        let historyItem = NSMenuItem(title: "📊 View History", action: #selector(openHistory), keyEquivalent: "h")
+        let historyItem = NSMenuItem(title: "View History", action: #selector(openHistory), keyEquivalent: "h")
         historyItem.target = self
         menu.addItem(historyItem)
 
         // Settings
-        let settingsItem = NSMenuItem(title: "⚙️  Settings", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
 
@@ -256,7 +256,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let remaining = timeTracker.getTimeRemaining()
         let isOverLimit = timeTracker.isOverLimit()
         if isOverLimit {
-            remainingMenuItem?.title = "⚠️ Over limit by \(formatSeconds(-remaining))"
+            remainingMenuItem?.title = "Over limit by \(formatSeconds(-remaining))"
         } else {
             remainingMenuItem?.title = "Remaining: \(formatSeconds(remaining))"
         }
