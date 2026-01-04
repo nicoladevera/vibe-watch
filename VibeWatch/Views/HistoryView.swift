@@ -11,6 +11,7 @@ struct HistoryWindowView: View {
     @ObservedObject var timeTracker: TimeTracker
     var onClose: () -> Void
     @State private var recentRecords: [DailyRecord] = []
+    @State private var weeklyRecords: [DailyRecord] = []
     @State private var showExportSheet = false
     @State private var showClearAlert = false
     
@@ -35,6 +36,10 @@ struct HistoryWindowView: View {
             // Content
             ScrollView {
                 VStack(spacing: 20) {
+                    weeklySummaryView
+
+                    Divider()
+
                     // Calendar heat map (placeholder)
                     calendarView
                     
@@ -67,6 +72,14 @@ struct HistoryWindowView: View {
         .onAppear {
             loadRecentRecords()
         }
+        .onReceive(timeTracker.$isDatabaseReady) { isReady in
+            if isReady {
+                loadRecentRecords()
+            }
+        }
+        .onReceive(timeTracker.$todayRecord) { _ in
+            refreshTodayRecord()
+        }
         .alert("Clear All Data?", isPresented: $showClearAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Clear", role: .destructive) {
@@ -76,12 +89,32 @@ struct HistoryWindowView: View {
             Text("This will permanently delete all historical data. This action cannot be undone.")
         }
         .sheet(isPresented: $showExportSheet) {
-            ExportDataView(timeTracker: timeTracker, onClose: onClose)
+            ExportDataView(timeTracker: timeTracker)
         }
     }
     
     private func loadRecentRecords() {
-        recentRecords = timeTracker.getRecentRecords(days: 30)
+        let recent = timeTracker.getRecentRecords(days: 30)
+        recentRecords = mergeTodayRecord(into: recent)
+
+        let weekly = timeTracker.getRecentRecords(days: 7)
+        weeklyRecords = mergeTodayRecord(into: weekly)
+    }
+
+    private func refreshTodayRecord() {
+        recentRecords = mergeTodayRecord(into: recentRecords)
+        weeklyRecords = mergeTodayRecord(into: weeklyRecords)
+    }
+
+    private func mergeTodayRecord(into records: [DailyRecord]) -> [DailyRecord] {
+        var updated = records
+        let today = timeTracker.todayRecord
+        if let index = updated.firstIndex(where: { $0.isToday() }) {
+            updated[index] = today
+        } else {
+            updated.insert(today, at: 0)
+        }
+        return updated.sorted { $0.date > $1.date }
     }
     
     private func clearAllData() {
@@ -101,6 +134,16 @@ struct HistoryWindowView: View {
             Text("Calendar heat map coming soon...")
                 .foregroundColor(.secondary)
                 .padding()
+        }
+    }
+
+    private var weeklySummaryView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("This Week")
+                .font(.headline)
+
+            WeeklySummaryChart(records: weeklyRecords)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
     
@@ -169,7 +212,7 @@ struct DayRecordRow: View {
 
 struct ExportDataView: View {
     @ObservedObject var timeTracker: TimeTracker
-    var onClose: () -> Void
+    @Environment(\.dismiss) var dismiss
     @State private var exportFormat: ExportFormat = .csv
     @State private var showSavePanel = false
     
@@ -188,7 +231,7 @@ struct ExportDataView: View {
             
             HStack {
                 Button("Cancel") {
-                    onClose()
+                    dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
                 
@@ -220,7 +263,7 @@ struct ExportDataView: View {
                         try csvString.write(to: url, atomically: true, encoding: .utf8)
                     }
                     
-                    onClose()
+                    dismiss()
                 } catch {
                     print("Export error: \(error)")
                 }

@@ -10,7 +10,19 @@ import AppKit
 
 class AppDetector {
     // Apps we're tracking
-    private let trackedApps = ["Cursor", "Antigravity", "Terminal"]
+    private var trackedApps: [String]
+    private let aliasBundleIdentifiers: [String: [String]] = [
+        "cursor": ["com.todesktop.230313mzl4w4u92"],
+        "terminal": ["com.apple.terminal"]
+    ]
+
+    init(trackedApps: [String] = ["Cursor", "Antigravity", "Terminal"]) {
+        self.trackedApps = trackedApps
+    }
+
+    func updateTrackedApps(_ apps: [String]) {
+        trackedApps = apps
+    }
     
     /// Returns a dictionary of which tracked apps are currently running
     /// Key: app name, Value: true if running
@@ -20,9 +32,13 @@ class AppDetector {
         let runningApps = NSWorkspace.shared.runningApplications
         
         for appName in trackedApps {
+            let target = appName.lowercased()
+            let aliases = aliasBundleIdentifiers[target] ?? []
             let isRunning = runningApps.contains { app in
-                app.localizedName?.contains(appName) == true ||
-                app.bundleIdentifier?.contains(appName.lowercased()) == true
+                let name = app.localizedName?.lowercased() ?? ""
+                let bundleId = app.bundleIdentifier?.lowercased() ?? ""
+                let matchesAlias = aliases.contains { bundleId == $0 }
+                return matchesAlias || name.contains(target) || bundleId.contains(target)
             }
             runningStatus[appName] = isRunning
         }
@@ -41,5 +57,8 @@ class AppDetector {
         let status = detectRunningApps()
         return status.filter { $0.value }.map { $0.key }
     }
-}
 
+    func getAllRunningAppNames() -> [String] {
+        NSWorkspace.shared.runningApplications.compactMap { $0.localizedName }
+    }
+}

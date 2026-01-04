@@ -12,6 +12,7 @@ class AppSettings: ObservableObject {
     @Published var idleThresholdSeconds: Int
     @Published var launchAtLogin: Bool
     @Published var showTimeInMenuBar: Bool
+    @Published var trackedApps: [String]
     
     private let defaults = UserDefaults.standard
     
@@ -20,6 +21,7 @@ class AppSettings: ObservableObject {
     private let idleThresholdKey = "idleThresholdSeconds"
     private let launchAtLoginKey = "launchAtLogin"
     private let showTimeKey = "showTimeInMenuBar"
+    private let trackedAppsKey = "trackedApps"
     
     init() {
         // Load idle threshold
@@ -47,6 +49,13 @@ class AppSettings: ObservableObject {
                 7: 2 * 3600   // Saturday
             ]
         }
+
+        // Load tracked apps
+        if let savedApps = defaults.array(forKey: trackedAppsKey) as? [String], !savedApps.isEmpty {
+            self.trackedApps = savedApps
+        } else {
+            self.trackedApps = ["Cursor", "Antigravity", "Terminal"]
+        }
     }
     
     /// Save settings to UserDefaults
@@ -56,6 +65,7 @@ class AppSettings: ObservableObject {
         defaults.set(idleThresholdSeconds, forKey: idleThresholdKey)
         defaults.set(launchAtLogin, forKey: launchAtLoginKey)
         defaults.set(showTimeInMenuBar, forKey: showTimeKey)
+        defaults.set(trackedApps, forKey: trackedAppsKey)
     }
     
     /// Get limit for today in seconds
@@ -85,4 +95,3 @@ class AppSettings: ObservableObject {
         return Int(hours * 3600)
     }
 }
-

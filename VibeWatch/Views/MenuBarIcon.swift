@@ -65,9 +65,13 @@ class MenuBarIconManager {
     /// Update icon with optional time text
     func updateWithTime(_ timeString: String?, state: IconState, animated: Bool = true) {
         updateIcon(to: state, animated: animated)
-        
-        // TODO: Add time text next to icon if showTimeInMenuBar is enabled
-        // This would require creating a custom view with both icon and text
+
+        let title = timeString ?? ""
+        statusItem.length = title.isEmpty ? NSStatusItem.squareLength : NSStatusItem.variableLength
+        if let button = statusItem.button {
+            button.title = title
+            button.imagePosition = title.isEmpty ? .imageOnly : .imageLeading
+        }
     }
 }
 
@@ -89,4 +93,3 @@ extension MenuBarIconManager {
         // For now, we're using SF Symbols as placeholders
     }
 }
-

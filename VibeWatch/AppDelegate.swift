@@ -42,6 +42,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         timeTracker = TimeTracker(settings: settings)
         print("✅ TimeTracker initialized (NOT started)")
 
+        setupSettingsObservers()
+
         // Create the status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         print("✅ Status item created")
@@ -63,20 +65,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         iconManager = MenuBarIconManager(statusItem: statusItem)
         print("✅ Icon manager initialized")
 
-        // STILL DISABLED:
         // Start tracking
-        // timeTracker.startTracking()
-        // print("✅ Time tracking started")
+        timeTracker.startTracking()
+        print("✅ Time tracking started")
 
         // Set up icon updates every 30 seconds
-        // iconUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
-        //     self?.updateMenuBarIcon()
-        // }
+        iconUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            self?.updateMenuBarIcon()
+        }
 
         // Set up menu updates every 10 seconds
-        // menuUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
-        //     self?.updateMenuItems()
-        // }
+        menuUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+            self?.updateMenuItems()
+        }
 
         // Set up sleep/wake notifications
         setupSleepWakeNotifications()
@@ -102,6 +103,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSWorkspace.didWakeNotification,
             object: nil
         )
+    }
+
+    private func setupSettingsObservers() {
+        settings.$idleThresholdSeconds
+            .removeDuplicates()
+            .sink { [weak self] newValue in
+                self?.timeTracker.updateIdleThreshold(seconds: newValue)
+            }
+            .store(in: &cancellables)
+
+        settings.$showTimeInMenuBar
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                self?.updateMenuBarIcon()
+            }
+            .store(in: &cancellables)
+
+        settings.$launchAtLogin
+            .removeDuplicates()
+            .dropFirst()
+            .sink { enabled in
+                LoginItemManager.setLaunchAtLogin(enabled: enabled)
+            }
+            .store(in: &cancellables)
+
+        settings.$trackedApps
+            .removeDuplicates()
+            .sink { [weak self] apps in
+                self?.timeTracker.updateTrackedApps(apps)
+            }
+            .store(in: &cancellables)
+
+        timeTracker.$todayRecord
+            .sink { [weak self] _ in
+                self?.updateMenuItems()
+                self?.updateMenuBarIcon()
+            }
+            .store(in: &cancellables)
     }
     
     @objc private func systemWillSleep() {
@@ -263,6 +302,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let settingsView = SettingsWindowView(settings: settings) { [weak self] in
             DispatchQueue.main.async { [weak self] in
+                self?.updateMenuItems()
+                self?.updateMenuBarIcon()
                 self?.settingsWindow?.performClose(nil)
             }
         }
@@ -293,7 +334,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateMenuBarIcon() {
         let state = timeTracker.getIconState()
-        iconManager?.updateIcon(to: state, animated: true)
+        let timeString = settings.showTimeInMenuBar ? timeTracker.todayRecord.formattedTotalTime() : nil
+        iconManager?.updateWithTime(timeString, state: state, animated: true)
     }
 
     @objc private func quitApp() {

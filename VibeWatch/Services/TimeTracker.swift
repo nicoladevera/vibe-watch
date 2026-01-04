@@ -11,24 +11,25 @@ import Combine
 class TimeTracker: ObservableObject {
     @Published var todayRecord: DailyRecord
     @Published var isTracking: Bool = false
+    @Published private(set) var isDatabaseReady: Bool = false
     
     private let appDetector: AppDetector
-    private let idleMonitor: IdleMonitor
+    private var idleMonitor: IdleMonitor
     private let settings: AppSettings
     private var dataStore: DataStore?  // Made optional - lazy init
-    private var timer: Timer?
+    private var timer: DispatchSourceTimer?
     private let trackingQueue = DispatchQueue(label: "vibewatch.tracking", qos: .utility)
     private var lastCheckDate: Date?
     
-    // Polling interval: 30 seconds
-    private let pollingInterval: TimeInterval = 30.0
+    // Polling interval: 15 seconds
+    private let pollingInterval: TimeInterval = 15.0
     
     // Track time per app since last save
     private var pendingTime: [String: Int] = [:]
     
     init(settings: AppSettings) {
         self.settings = settings
-        self.appDetector = AppDetector()
+        self.appDetector = AppDetector(trackedApps: settings.trackedApps)
         self.idleMonitor = IdleMonitor(idleThresholdSeconds: TimeInterval(settings.idleThresholdSeconds))
         
         // Initialize today's record with empty data (database loads later)
@@ -46,7 +47,18 @@ class TimeTracker: ObservableObject {
         print("🗄️ Initializing database in background...")
         self.dataStore = DataStore()
         loadTodayRecord()
+        DispatchQueue.main.async { [weak self] in
+            self?.isDatabaseReady = true
+        }
         print("✅ Database ready")
+    }
+
+    func updateIdleThreshold(seconds: Int) {
+        idleMonitor = IdleMonitor(idleThresholdSeconds: TimeInterval(seconds))
+    }
+
+    func updateTrackedApps(_ apps: [String]) {
+        appDetector.updateTrackedApps(apps)
     }
     
     /// Start tracking
@@ -56,22 +68,21 @@ class TimeTracker: ObservableObject {
         isTracking = true
         lastCheckDate = Date()
 
-        // Start timer
-        timer = Timer.scheduledTimer(withTimeInterval: pollingInterval, repeats: true) { [weak self] _ in
-            self?.trackingQueue.async { [weak self] in
-                self?.checkAndTrackTime()
-            }
+        let timer = DispatchSource.makeTimerSource(queue: trackingQueue)
+        timer.schedule(deadline: .now() + 1.0, repeating: pollingInterval)
+        timer.setEventHandler { [weak self] in
+            self?.checkAndTrackTime()
         }
+        timer.resume()
+        self.timer = timer
 
-        // Don't run immediately - it blocks the main thread during app launch
-        // The timer will fire after 30 seconds
-        // checkAndTrackTime()
+        // Initial fire is delayed slightly to avoid doing work during app launch.
     }
     
     /// Stop tracking
     func stopTracking() {
         isTracking = false
-        timer?.invalidate()
+        timer?.cancel()
         timer = nil
         
         // Save any pending time
@@ -82,7 +93,8 @@ class TimeTracker: ObservableObject {
     private func checkAndTrackTime() {
         let now = Date()
         let calendar = Calendar.current
-        let shouldRollDay = lastCheckDate.map { !calendar.isDate($0, inSameDayAs: now) } ?? false
+        let previousCheckDate = lastCheckDate
+        let shouldRollDay = previousCheckDate.map { !calendar.isDate($0, inSameDayAs: now) } ?? false
 
         // Check if date has changed (midnight passed)
         if shouldRollDay {
@@ -96,25 +108,23 @@ class TimeTracker: ObservableObject {
         }
         lastCheckDate = now
         
-        // Check if any tracked app is running
-        guard appDetector.isAnyTrackedAppRunning() else {
-            return
-        }
+        // Check if any tracked app is running (AppKit access on main)
+        let runningApps = DispatchQueue.main.sync { appDetector.getRunningAppNames() }
+        guard !runningApps.isEmpty else { return }
         
         // Check if user is active
-        guard idleMonitor.isUserActive() else {
-            return
-        }
+        guard idleMonitor.isUserActive() else { return }
         
         // Track time! Add the polling interval to each running app
-        let runningApps = appDetector.getRunningAppNames()
         let currentHour = calendar.component(.hour, from: now)
+        let elapsedSeconds = Int(pollingInterval)
 
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            self.todayRecord.addTotalTime(seconds: elapsedSeconds, hour: currentHour)
             for appName in runningApps {
-                self.pendingTime[appName, default: 0] += Int(self.pollingInterval)
-                self.todayRecord.addTime(appName: appName, seconds: Int(self.pollingInterval), hour: currentHour)
+                self.pendingTime[appName, default: 0] += elapsedSeconds
+                self.todayRecord.addAppTime(appName: appName, seconds: elapsedSeconds)
             }
 
             // Check if we should persist (every 5 minutes worth of checks)
