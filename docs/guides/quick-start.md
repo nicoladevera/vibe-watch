@@ -99,9 +99,8 @@ No internet connection required. No telemetry. Your data stays on your machine.
 ## Next Steps
 
 Want to customize further? Check out:
-- `tasks/prd-vibe-watch.md` - Full product requirements
-- `tasks/tasks-vibe-watch.md` - Implementation checklist
+- `docs/product/prd.md` - Full product requirements
+- `docs/product/tasks.md` - Implementation checklist
 - `README.md` - Architecture overview
 
 Happy vibe coding! 🦉✨
-
