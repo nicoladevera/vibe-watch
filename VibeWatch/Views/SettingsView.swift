@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SettingsWindowView: View {
     @ObservedObject var settings: AppSettings
-    @Environment(\.dismiss) var dismiss
+    var onDone: () -> Void
     
     private let daysOfWeek = [
         (1, "Sunday"),
@@ -33,7 +33,7 @@ struct SettingsWindowView: View {
                 
                 Button("Done") {
                     settings.save()
-                    dismiss()
+                    onDone()
                 }
                 .keyboardShortcut(.defaultAction)
             }
@@ -154,6 +154,5 @@ struct DayLimitSlider: View {
 }
 
 #Preview {
-    SettingsWindowView(settings: AppSettings())
+    SettingsWindowView(settings: AppSettings(), onDone: {})
 }
-
