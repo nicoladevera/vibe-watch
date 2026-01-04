@@ -56,6 +56,15 @@ def remove_checkered_background_and_make_square(input_path, output_path):
         img = img.crop(bbox)
         print(f"  ✓ Cropped to {img.size[0]}x{img.size[1]}")
 
+    # Add a touch of vertical padding before squaring
+    width, height = img.size
+    extra_vertical_padding = max(2, int(round(height * 0.06)))
+    padded_height = height + (extra_vertical_padding * 2)
+    padded_img = Image.new('RGBA', (width, padded_height), (255, 255, 255, 0))
+    padded_img.paste(img, (0, extra_vertical_padding), img)
+    img = padded_img
+    print(f"  ✓ Added vertical padding: {extra_vertical_padding}px top/bottom")
+
     # Now make it square by adding transparent padding
     width, height = img.size
 
