@@ -13,17 +13,19 @@ class AppSettings: ObservableObject {
     @Published var launchAtLogin: Bool
     @Published var showTimeInMenuBar: Bool
     @Published var trackedApps: [String]
-    
-    private let defaults = UserDefaults.standard
-    
+
+    private let defaults: UserDefaults
+
     // Keys for UserDefaults
     private let dailyLimitsKey = "dailyLimits"
     private let idleThresholdKey = "idleThresholdSeconds"
     private let launchAtLoginKey = "launchAtLogin"
     private let showTimeKey = "showTimeInMenuBar"
     private let trackedAppsKey = "trackedApps"
-    
-    init() {
+
+    /// Initialize AppSettings with custom UserDefaults (for testing) or standard UserDefaults
+    init(userDefaults: UserDefaults = .standard) {
+        self.defaults = userDefaults
         // Load idle threshold
         let savedIdleThreshold = defaults.integer(forKey: idleThresholdKey)
         self.idleThresholdSeconds = savedIdleThreshold > 0 ? savedIdleThreshold : 180 // Default 3 minutes

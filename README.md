@@ -108,6 +108,7 @@ Want to track other apps? Open an issue or submit a PR!
 - Quick start: `docs/guides/quick-start.md`
 - Product requirements: `docs/product/prd.md`
 - Task checklist: `docs/product/tasks.md`
+- Testing documentation: `docs/testing/` (quick reference & recommendations)
 - Debugging notes: `docs/debugging/`
 
 ## Roadmap

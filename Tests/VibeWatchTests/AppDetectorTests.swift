@@ -35,10 +35,9 @@ final class AppDetectorTests: XCTestCase {
     
     func testGetRunningAppNames() throws {
         let runningApps = detector.getRunningAppNames()
-        
+
         // Should return an array (may be empty if no tracked apps running)
         XCTAssertNotNil(runningApps)
-        XCTAssertTrue(runningApps is [String])
     }
 }
 

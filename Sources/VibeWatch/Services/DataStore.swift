@@ -11,18 +11,28 @@ import GRDB
 class DataStore {
     private var dbQueue: DatabaseQueue?
     private let dbPath: String
-    
-    init() {
-        // Create database in Application Support directory
+
+    /// Default initializer using Application Support directory
+    convenience init() {
         let fileManager = FileManager.default
         let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let vibeWatchDir = appSupport.appendingPathComponent("VibeWatch", isDirectory: true)
-        
+
         // Create directory if it doesn't exist
         try? fileManager.createDirectory(at: vibeWatchDir, withIntermediateDirectories: true)
-        
-        dbPath = vibeWatchDir.appendingPathComponent("vibewatch.sqlite").path
-        
+
+        let path = vibeWatchDir.appendingPathComponent("vibewatch.sqlite").path
+        self.init(databasePath: path)
+    }
+
+    /// Testable initializer with custom database path
+    init(databasePath: String) {
+        dbPath = databasePath
+
+        // Create parent directory if needed
+        let parentDir = URL(fileURLWithPath: databasePath).deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: parentDir, withIntermediateDirectories: true)
+
         do {
             dbQueue = try DatabaseQueue(path: dbPath)
             try setupDatabase()

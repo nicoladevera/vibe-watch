@@ -27,6 +27,7 @@
   - `docs/`: project documentation
     - `docs/guides/`: onboarding/how-to (`docs/guides/quick-start.md`)
     - `docs/product/`: product/requirements docs
+    - `docs/testing/`: testing documentation (quick reference & recommendations)
     - `docs/debugging/`: known issues and troubleshooting
     - `docs/ai/rules/`: internal prompt/rules docs
 - No separate sub-projects; no hierarchical `AGENTS.md` needed.
@@ -43,11 +44,17 @@
 ## Testing Strategy
 - Framework: XCTest (`import XCTest` in `Tests/VibeWatchTests/`)
 - Run tests: `swift test`
-- Test location and examples:
-  - `Tests/VibeWatchTests/TimeTrackerTests.swift`
-  - `Tests/VibeWatchTests/AppDetectorTests.swift`
-  - `Tests/VibeWatchTests/IdleMonitorTests.swift`
-- No explicit coverage thresholds or CI gates defined in the repo.
+- Coverage: ~32-35% (59 tests passing in 0.246s)
+- Test files:
+  - `Tests/VibeWatchTests/TimeTrackerTests.swift` (21 tests - integration tests with DataStore)
+  - `Tests/VibeWatchTests/DataStoreTests.swift` (13 tests - CRUD, exports, edge cases)
+  - `Tests/VibeWatchTests/AppSettingsTests.swift` (18 tests - persistence, defaults, edge cases)
+  - `Tests/VibeWatchTests/AppDetectorTests.swift` (3 tests - app detection)
+  - `Tests/VibeWatchTests/IdleMonitorTests.swift` (3 tests - idle detection)
+  - `Tests/VibeWatchTests/VibeWatchTests.swift` (1 placeholder test)
+- Testing documentation: `docs/testing/` (quick reference & recommendations)
+- Phase 1 testing complete: All critical components (DataStore, AppSettings, TimeTracker) have >70% coverage
+- CI/CD: Not yet configured (Phase 2 pending)
 
 ## Code Style & Standards
 - No explicit lint/format tooling (no SwiftLint/SwiftFormat config present).
