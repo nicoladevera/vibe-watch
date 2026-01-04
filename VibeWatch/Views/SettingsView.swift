@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsWindowView: View {
     @ObservedObject var settings: AppSettings
     var onDone: () -> Void
+    @State private var newTrackedApp = ""
     
     private let daysOfWeek = [
         (1, "Sunday"),
@@ -46,6 +47,11 @@ struct SettingsWindowView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     // Daily Limits Section
                     dailyLimitsSection
+                    
+                    Divider()
+
+                    // Tracked Apps Section
+                    trackedAppsSection
                     
                     Divider()
                     
@@ -106,12 +112,61 @@ struct SettingsWindowView: View {
             
             // Launch at login
             Toggle("Launch at login", isOn: $settings.launchAtLogin)
-                .disabled(true) // Will implement later
-            
-            Text("Launch at login will be available in a future update")
+
+            Text("Launch at login may require a restart to take effect")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
+    }
+
+    private var trackedAppsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Tracked Apps")
+                .font(.headline)
+
+            Text("Add app names as they appear in Activity Monitor.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            HStack {
+                TextField("Add app (e.g., Xcode)", text: $newTrackedApp)
+                Button("Add") {
+                    addTrackedApp()
+                }
+                .disabled(newTrackedApp.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+
+            if settings.trackedApps.isEmpty {
+                Text("No apps tracked yet.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } else {
+                ForEach(settings.trackedApps, id: \.self) { app in
+                    HStack {
+                        Text(app)
+                        Spacer()
+                        Button("Remove") {
+                            removeTrackedApp(app)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func addTrackedApp() {
+        let trimmed = newTrackedApp.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        guard !settings.trackedApps.contains(trimmed) else {
+            newTrackedApp = ""
+            return
+        }
+        settings.trackedApps.append(trimmed)
+        newTrackedApp = ""
+    }
+
+    private func removeTrackedApp(_ app: String) {
+        settings.trackedApps.removeAll { $0 == app }
     }
 }
 

@@ -22,14 +22,17 @@ struct DailyRecord: Codable, Identifiable {
         self.hourlyActivity = Array(repeating: 0, count: 24)
     }
     
-    /// Add time for a specific app
-    mutating func addTime(appName: String, seconds: Int, hour: Int) {
+    /// Add total time once per tick
+    mutating func addTotalTime(seconds: Int, hour: Int) {
         totalSeconds += seconds
-        appBreakdown[appName, default: 0] += seconds
-        
         if hour >= 0 && hour < 24 {
             hourlyActivity[hour] += seconds / 60 // Convert to minutes
         }
+    }
+
+    /// Add per-app breakdown without affecting total time
+    mutating func addAppTime(appName: String, seconds: Int) {
+        appBreakdown[appName, default: 0] += seconds
     }
     
     /// Get formatted total time (e.g., "3h 42m")
@@ -37,6 +40,10 @@ struct DailyRecord: Codable, Identifiable {
         let hours = totalSeconds / 3600
         let minutes = (totalSeconds % 3600) / 60
         
+        if totalSeconds < 60 {
+            return "\(totalSeconds)s"
+        }
+
         if hours > 0 {
             return "\(hours)h \(minutes)m"
         } else {
@@ -56,4 +63,3 @@ struct DailyRecord: Codable, Identifiable {
         Calendar.current.isDateInToday(date)
     }
 }
-

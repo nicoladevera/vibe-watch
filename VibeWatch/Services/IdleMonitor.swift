@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreGraphics
 
 class IdleMonitor {
     private let idleThresholdSeconds: TimeInterval
@@ -14,44 +15,27 @@ class IdleMonitor {
         self.idleThresholdSeconds = idleThresholdSeconds
     }
     
-    /// Returns the system idle time in seconds
-    /// Note: This call is synchronous and may block briefly (~0.1s)
-    /// It should be called from a background thread for best performance
+    /// Returns the system idle time in seconds.
+    /// Uses CoreGraphics to avoid blocking calls.
     func getSystemIdleTime() -> TimeInterval? {
-        let task = Process()
-        task.launchPath = "/usr/sbin/ioreg"
-        task.arguments = ["-c", "IOHIDSystem"]
+        let eventTypes: [CGEventType] = [
+            .keyDown,
+            .mouseMoved,
+            .leftMouseDown,
+            .rightMouseDown,
+            .otherMouseDown,
+            .scrollWheel
+        ]
 
-        let pipe = Pipe()
-        task.standardOutput = pipe
-
-        do {
-            try task.run()
-
-            // Wait for completion (blocks current thread)
-            // This typically takes ~50-100ms
-            task.waitUntilExit()
-
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            if let output = String(data: data, encoding: .utf8) {
-                // Parse HIDIdleTime from output
-                // Format: "HIDIdleTime" = 123456789 (nanoseconds)
-                if let match = output.range(of: "\"HIDIdleTime\"\\s*=\\s*(\\d+)", options: .regularExpression) {
-                    let matchedString = String(output[match])
-                    if let numberMatch = matchedString.range(of: "\\d+", options: .regularExpression) {
-                        let numberString = String(matchedString[numberMatch])
-                        if let nanoseconds = Double(numberString) {
-                            // Convert nanoseconds to seconds
-                            return nanoseconds / 1_000_000_000.0
-                        }
-                    }
-                }
+        let idleTimes = eventTypes.compactMap { eventType -> TimeInterval? in
+            let idleTime = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: eventType)
+            if idleTime.isInfinite || idleTime < 0 {
+                return nil
             }
-        } catch {
-            print("Error running ioreg: \(error)")
+            return idleTime
         }
 
-        return nil
+        return idleTimes.min()
     }
     
     /// Returns true if the user is currently active (idle time is below threshold)
@@ -62,6 +46,14 @@ class IdleMonitor {
         }
         return idleTime < idleThresholdSeconds
     }
+
+    func idleStatus() -> (idleTime: TimeInterval?, isActive: Bool) {
+        let idleTime = getSystemIdleTime()
+        if let idleTime = idleTime {
+            return (idleTime, idleTime < idleThresholdSeconds)
+        }
+        return (nil, true)
+    }
     
     /// Updates the idle threshold
     func setIdleThreshold(_ seconds: TimeInterval) {
@@ -69,4 +61,3 @@ class IdleMonitor {
         // For now, create a new instance if threshold needs to change
     }
 }
-
