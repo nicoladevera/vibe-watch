@@ -24,13 +24,15 @@ let package = Package(
             dependencies: [
                 .product(name: "GRDB", package: "GRDB.swift")
             ],
-            path: "VibeWatch"
+            path: "Sources/VibeWatch",
+            exclude: [
+                "Info.plist"
+            ]
         ),
         .testTarget(
             name: "VibeWatchTests",
             dependencies: ["VibeWatch"],
-            path: "VibeWatchTests"
+            path: "Tests/VibeWatchTests"
         )
     ]
 )
-

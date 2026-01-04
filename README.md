@@ -87,12 +87,10 @@ Vibe Watch uses native macOS APIs to:
 ## Architecture
 
 ```
-VibeWatch/
+Sources/VibeWatch/
 ├── Models/           # Data models (DailyRecord, TimeEntry, AppSettings)
 ├── Views/            # SwiftUI views (DropdownPanel, HistoryView, SettingsView)
-├── Services/         # Business logic (TimeTracker, AppDetector, IdleMonitor, DataStore)
-├── Utilities/        # Helper functions
-└── Resources/        # Assets (owl icons)
+└── Services/         # Business logic (TimeTracker, AppDetector, IdleMonitor, DataStore)
 ```
 
 ## Tracked Applications
@@ -102,6 +100,13 @@ VibeWatch/
 - **Terminal**: macOS default terminal
 
 Want to track other apps? Open an issue or submit a PR!
+
+## Docs
+
+- Quick start: `docs/guides/quick-start.md`
+- Product requirements: `docs/product/prd.md`
+- Task checklist: `docs/product/tasks.md`
+- Debugging notes: `docs/debugging/`
 
 ## Roadmap
 
@@ -130,4 +135,3 @@ MIT License - see LICENSE file for details
 ---
 
 **Made with 💙 by developers, for developers**
-
