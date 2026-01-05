@@ -10,6 +10,8 @@ import SwiftUI
 struct DropdownPanelView: View {
     @ObservedObject var timeTracker: TimeTracker
     @ObservedObject var settings: AppSettings
+    var onOpenHistory: () -> Void
+    var onOpenSettings: () -> Void
     var onQuit: () -> Void
     
     @State private var showHistory = false
@@ -29,33 +31,18 @@ struct DropdownPanelView: View {
             
             Divider()
             
-            // Weekly summary placeholder
-            VStack(alignment: .leading, spacing: 8) {
-                Text("This Week")
-                    .font(.headline)
-                Text("Weekly chart coming soon")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            
-            Divider()
-            
             // Actions
             actionsView
                 .padding(.vertical, 8)
         }
-        .frame(width: 320, height: 380)
+        .frame(width: 320)
         .background(Color(NSColor.windowBackgroundColor))
     }
     
     private var headerView: some View {
         HStack {
-            Image(systemName: "moon.stars.fill")
-                .font(.title2)
-                .foregroundColor(.blue)
-            
+            iconView
+                .frame(width: 18, height: 18)
             Text("Vibe Watch")
                 .font(.title2)
                 .fontWeight(.semibold)
@@ -69,7 +56,7 @@ struct DropdownPanelView: View {
             // Today's total time
             HStack {
                 Text("Today:")
-                    .font(.headline)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                 Spacer()
                 Text(timeTracker.todayRecord.formattedTotalTime())
                     .font(.system(size: 32, weight: .bold, design: .rounded))
@@ -78,22 +65,32 @@ struct DropdownPanelView: View {
             
             // Limit and remaining
             HStack {
-                Text("Limit:")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Text(formatSeconds(settings.getTodayLimit()))
-                    .font(.subheadline)
-                
+                HStack(spacing: 6) {
+                    Text("Limit:")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text(formatSeconds(settings.getTodayLimit()))
+                        .font(.subheadline)
+                }
+
                 Spacer()
                 
-                Text("·")
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Text("\(formatSeconds(timeTracker.getTimeRemaining())) remaining")
-                    .font(.subheadline)
-                    .foregroundColor(timeTracker.isOverLimit() ? .red : .secondary)
+                HStack(spacing: 6) {
+                    if timeTracker.isOverLimit() {
+                        Text("Over limit by")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(formatSeconds(timeTracker.getOverLimitSeconds()))
+                            .font(.subheadline)
+                            .foregroundColor(.red)
+                    } else {
+                        Text("Remaining:")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(formatSeconds(timeTracker.getTimeRemaining()))
+                            .font(.subheadline)
+                    }
+                }
             }
             
             // Progress bar
@@ -105,7 +102,7 @@ struct DropdownPanelView: View {
     private var actionsView: some View {
         VStack(spacing: 6) {
             Button("View History") {
-                print("History clicked")
+                onOpenHistory()
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -113,7 +110,7 @@ struct DropdownPanelView: View {
             .padding(.vertical, 6)
             
             Button("Settings") {
-                print("Settings clicked")
+                onOpenSettings()
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -149,6 +146,38 @@ struct DropdownPanelView: View {
         case .exhausted: return .red
         }
     }
+
+    private var iconView: some View {
+        let name = iconName(for: timeTracker.getIconState())
+        if let url = Bundle.module.url(forResource: name, withExtension: "png"),
+           let image = NSImage(contentsOf: url) {
+            image.isTemplate = true
+            return AnyView(
+                Image(nsImage: image)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+                    .foregroundColor(.white)
+            )
+        }
+
+        return AnyView(
+            Image(systemName: "eye.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 18, height: 18)
+                .foregroundColor(.white)
+        )
+    }
+
+    private func iconName(for state: IconState) -> String {
+        switch state {
+        case .alert: return "alert"
+        case .concerned: return "concerned"
+        case .exhausted: return "exhausted"
+        }
+    }
     
     private func formatSeconds(_ seconds: Int) -> String {
         let hours = seconds / 3600
@@ -156,4 +185,3 @@ struct DropdownPanelView: View {
         return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
     }
 }
-

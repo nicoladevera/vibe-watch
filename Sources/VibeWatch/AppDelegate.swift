@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     var menu: NSMenu!
     var iconManager: MenuBarIconManager?
+    private var popover: NSPopover?
 
     // Core services
     var settings: AppSettings!
@@ -67,11 +68,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        // Create the menu
-        menu = NSMenu()
-        setupMenu()
-        statusItem.menu = menu
-        print("✅ Menu created and configured")
+        // Create the popover panel
+        setupPopover()
+        print("✅ Popover created and configured")
 
         // TEST: Re-enable icon manager only
         iconManager = MenuBarIconManager(statusItem: statusItem)
@@ -244,6 +243,47 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         updateMenuItems()
     }
 
+    private func setupPopover() {
+        let panelView = DropdownPanelView(
+            timeTracker: timeTracker,
+            settings: settings,
+            onOpenHistory: { [weak self] in
+                self?.closePopover()
+                self?.openHistory()
+            },
+            onOpenSettings: { [weak self] in
+                self?.closePopover()
+                self?.openSettings()
+            },
+            onQuit: { [weak self] in
+                self?.quitApp()
+            }
+        )
+
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.contentViewController = NSHostingController(rootView: panelView)
+        self.popover = popover
+
+        if let button = statusItem.button {
+            button.target = self
+            button.action = #selector(togglePopover)
+        }
+    }
+
+    @objc private func togglePopover() {
+        guard let button = statusItem.button, let popover = popover else { return }
+        if popover.isShown {
+            popover.performClose(nil)
+        } else {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        }
+    }
+
+    private func closePopover() {
+        popover?.performClose(nil)
+    }
+
     private func updateMenuItems() {
         // Update today's time
         todayMenuItem?.title = "Today: \(timeTracker.todayRecord.formattedTotalTime())"
@@ -253,16 +293,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         limitMenuItem?.title = "Limit: \(formatSeconds(limitSeconds))"
 
         // Update remaining
-        let remaining = timeTracker.getTimeRemaining()
         let isOverLimit = timeTracker.isOverLimit()
         if isOverLimit {
-            remainingMenuItem?.title = "Over limit by \(formatSeconds(-remaining))"
+            remainingMenuItem?.title = "Over limit by \(formatSeconds(timeTracker.getOverLimitSeconds()))"
         } else {
-            remainingMenuItem?.title = "Remaining: \(formatSeconds(remaining))"
+            remainingMenuItem?.title = "Remaining: \(formatSeconds(timeTracker.getTimeRemaining()))"
         }
     }
 
     @objc private func openHistory() {
+        closePopover()
         // If window already exists, just bring it to front
         if let window = historyWindow, window.isVisible {
             window.makeKeyAndOrderFront(nil)
@@ -303,6 +343,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
+        closePopover()
         // If window already exists, just bring it to front
         if let window = settingsWindow, window.isVisible {
             window.makeKeyAndOrderFront(nil)
