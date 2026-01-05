@@ -191,6 +191,13 @@ class TimeTracker: ObservableObject {
         let remaining = limit - todayRecord.totalSeconds
         return max(0, remaining)
     }
+
+    /// Get seconds spent over today's limit (0 if under)
+    func getOverLimitSeconds() -> Int {
+        let limit = settings.getTodayLimit()
+        let overLimit = todayRecord.totalSeconds - limit
+        return max(0, overLimit)
+    }
     
     /// Get the current icon state based on time remaining
     func getIconState() -> IconState {
