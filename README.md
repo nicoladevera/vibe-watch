@@ -50,14 +50,18 @@ cd vibe-watch
 # Build with Swift Package Manager (Debug)
 swift build
 
-# Run the debug build
+# Run the debug build (runs in foreground - will quit when terminal closes)
 ./.build/debug/VibeWatch
 
 # Or build for release (recommended)
 swift build --configuration release
 
-# Run the release build
-./.build/release/VibeWatch
+# Run the release build independently (detached from terminal)
+# The app will continue running even after you close the terminal
+nohup ./.build/release/VibeWatch > /dev/null 2>&1 &
+
+# Or run in background without nohup (simpler, but may quit if terminal closes)
+# ./.build/release/VibeWatch &
 ```
 
 ### Building with Xcode
@@ -67,7 +71,25 @@ swift build --configuration release
 open Package.swift
 ```
 
-Then press Cmd+R to build and run.
+Then press Cmd+R to build and run. When running from Xcode, the app will continue running independently after you close Xcode.
+
+### Running the App Independently
+
+**Important**: When you run the app directly from the terminal (e.g., `./.build/release/VibeWatch`), it's tied to that terminal session. Closing the terminal will quit the app.
+
+To run the app independently so it continues running after closing the terminal:
+
+```bash
+# After building for release
+swift build --configuration release
+
+# Run detached from terminal (recommended)
+nohup ./.build/release/VibeWatch > /dev/null 2>&1 &
+```
+
+The app will now run in the background and continue running even after you close the terminal. To quit the app, click the menu bar icon and select "Quit Vibe Watch".
+
+**Note**: For the best experience, consider building and running from Xcode (see above), which automatically handles running the app independently.
 
 ## Usage
 
