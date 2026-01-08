@@ -82,6 +82,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Set up icon updates every 30 seconds
         iconUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            // Check for day rollover periodically (in case wake notification was missed)
+            self?.timeTracker.checkDayRollover()
             self?.updateMenuBarIcon()
         }
 
@@ -160,9 +162,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func systemDidWake() {
+        // Check for day rollover first (in case we slept through midnight)
+        timeTracker.checkDayRollover()
+        
         // Resume tracking after wake
         timeTracker.startTracking()
+        
+        // Force update menu bar and menu items to reflect any day changes
         updateMenuBarIcon()
+        updateMenuItems()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
