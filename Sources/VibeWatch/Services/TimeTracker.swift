@@ -82,6 +82,10 @@ class TimeTracker: ObservableObject {
     
     /// Start tracking
     func startTracking() {
+        // Check for day rollover before starting/resuming tracking
+        // This ensures we handle day changes even if the app was asleep
+        checkDayRollover()
+        
         guard !isTracking else { return }
 
         isTracking = true
@@ -108,23 +112,38 @@ class TimeTracker: ObservableObject {
         savePendingTime()
     }
     
+    /// Check if day has rolled over and handle it if needed
+    /// This should be called explicitly after wake from sleep or periodically
+    func checkDayRollover() {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // Check if todayRecord is for a different day than now
+        let isDifferentDay = !calendar.isDate(todayRecord.date, inSameDayAs: now)
+        
+        if isDifferentDay {
+            print("📅 Day rollover detected: transitioning from \(todayRecord.date) to \(now)")
+            // New day! Save old record and create new one
+            savePendingTime()
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.todayRecord = DailyRecord(date: now)
+                self.loadTodayRecord()
+            }
+            // Update lastCheckDate to prevent duplicate rollover
+            lastCheckDate = now
+        }
+    }
+    
     /// Check if we should track time and update accordingly
     private func checkAndTrackTime() {
         let now = Date()
         let calendar = Calendar.current
-        let previousCheckDate = lastCheckDate
-        let shouldRollDay = previousCheckDate.map { !calendar.isDate($0, inSameDayAs: now) } ?? false
-
-        // Check if date has changed (midnight passed)
-        if shouldRollDay {
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                // New day! Save old record and create new one
-                self.savePendingTime()
-                self.todayRecord = DailyRecord(date: now)
-                self.loadTodayRecord()
-            }
-        }
+        
+        // Check for day rollover first
+        checkDayRollover()
+        
+        // Update lastCheckDate for tracking purposes
         lastCheckDate = now
         
         // Check if any tracked app is running (AppKit access on main)
