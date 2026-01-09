@@ -200,13 +200,13 @@ final class DataStoreTests: XCTestCase {
         // Check header contains expected columns
         let header = lines[0]
         XCTAssertTrue(header.contains("Date"), "Header should contain Date column")
-        XCTAssertTrue(header.contains("Total Hours"), "Header should contain Total Hours column")
+        XCTAssertTrue(header.contains("Total Minutes"), "Header should contain Total Minutes column")
         XCTAssertTrue(header.contains("Cursor"), "Header should contain Cursor app column")
         XCTAssertTrue(header.contains("Terminal"), "Header should contain Terminal app column")
 
-        // Check data row has values
+        // Check data row has values (7200 seconds = 120 minutes)
         let dataRow = lines[1]
-        XCTAssertTrue(dataRow.contains("2"), "Data row should show 2 hours")
+        XCTAssertTrue(dataRow.contains("120"), "Data row should show 120 total minutes")
     }
 
     // MARK: - Edge Cases
@@ -231,7 +231,7 @@ final class DataStoreTests: XCTestCase {
         XCTAssertEqual(decoded.count, 0)
 
         // CSV should have header only
-        XCTAssertTrue(csvData.contains("Date,Total Hours,Total Minutes"))
+        XCTAssertTrue(csvData.contains("Date,Total Minutes"))
     }
 
     func testMultipleAppsInRecord() throws {
