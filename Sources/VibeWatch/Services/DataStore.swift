@@ -162,20 +162,19 @@ class DataStore {
             to: Date()
         )
         
-        var csv = "Date,Total Hours,Total Minutes"
+        var csv = "Date,Total Minutes"
         
         // Add app column headers
         let allApps = Set(allRecords.flatMap { $0.appBreakdown.keys })
         for app in allApps.sorted() {
-            csv += ",\(app) (minutes)"
+            csv += ",\(escapeCSVField(app + " (minutes)"))"
         }
         csv += "\n"
         
         // Add data rows
         for record in allRecords {
-            let hours = record.totalSeconds / 3600
-            let minutes = (record.totalSeconds % 3600) / 60
-            csv += "\(record.formattedDate()),\(hours),\(minutes)"
+            let totalMinutes = record.totalSeconds / 60
+            csv += "\(escapeCSVField(record.formattedDate())),\(totalMinutes)"
             
             for app in allApps.sorted() {
                 let appMinutes = (record.appBreakdown[app] ?? 0) / 60
@@ -185,6 +184,16 @@ class DataStore {
         }
         
         return csv
+    }
+    
+    /// Escape a CSV field by quoting if it contains commas, quotes, or newlines
+    private func escapeCSVField(_ field: String) -> String {
+        // If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
+        if field.contains(",") || field.contains("\"") || field.contains("\n") {
+            let escaped = field.replacingOccurrences(of: "\"", with: "\"\"")
+            return "\"\(escaped)\""
+        }
+        return field
     }
     
     /// Parse a DailyRecord from a database row

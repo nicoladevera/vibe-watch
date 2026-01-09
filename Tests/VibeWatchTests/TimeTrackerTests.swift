@@ -178,7 +178,7 @@ final class TimeTrackerTests: XCTestCase {
 
         // Then: CSV should have content
         XCTAssertTrue(csvString.contains("Date"))
-        XCTAssertTrue(csvString.contains("Total Hours"))
+        XCTAssertTrue(csvString.contains("Total Minutes"))
     }
 
     // MARK: - Pending Time Accumulation Tests
